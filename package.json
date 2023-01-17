@@ -1,0 +1,23 @@
+{
+  "name": "projeto14-mywallet-back",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "modules": "^0.4.0",
+    "mongodb": "^4.13.0",
+    "node": "^19.4.0",
+    "nodemon": "^2.0.20"
+  }
+}
