@@ -8,9 +8,8 @@ import {v4 as uuid} from "uuid";
 
 dotenv.config();
 
+const app = express();
 
-const app = express()
-;
 app.use(cors());
 app.use(express.json());
 
@@ -75,7 +74,11 @@ app.post("/cadastro", async (req, res) => {
         return res.status(422).send(errors);
     };
 
-    try {
+    try { const isuser = await db.collection("users").findOne({$or : [{username, email}] })
+
+    if(isuser){
+        return res.status(422).send("Nome de usuario ou e-mail já cadastrados")
+    }
 
         const passwordHash = bcrypt.hashSync(password, 10);
 
