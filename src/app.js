@@ -24,6 +24,9 @@ mongoClient.connect()
 app.post("/", async (req, res) => {
     const { email, password } = req.headers;
 
+
+    console.log(email)
+
     const userSchema = joi.object({
         email: joi.string().email({ minDomainSegments: 2, tlds: { allow: ['com', 'br'] } }).required(),
         password: joi.string().min(6).max(18).required()
@@ -38,22 +41,23 @@ app.post("/", async (req, res) => {
     try {
 
         const user = await db.collection("users").findOne({ email });
-
+        
+        console.log(user, "pass digitado")
+        console.log(user.password,"passwordcripto")
         if (user && bcrypt.compareSync(password, user.password)) {
             const token = uuid();
             
-            await db.collection("sessions"),insertOne({
+            console.log(token, "token")
+
+            await db.collection("sessions").insertOne({
                 userId: user._id,
                 token
             })
-            res.send(token)
+           return res.status(201).send(token)
             
         } else {
             return res.status(422).send("e-mail ou senha incorretos")
         }
-
-        return res.sendStatus(201);
-
     } catch (err) { return res.status(500).send(err.message) }
 });
 
