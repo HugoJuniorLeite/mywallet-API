@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient } from "mongodb";
 import dotenv from "dotenv";
 import joi from 'joi';
 import bcrypt from "bcrypt"
@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const mongoClient = new MongoClient(process.env.REACT_APP_API_URL);
+const mongoClient = new MongoClient(process.env.DATABASE_URL);
 let db;
 
 mongoClient.connect()
@@ -41,17 +41,11 @@ app.post("/sign-in", async (req, res) => {
         const user = await db.collection("users").findOne({ email });
         if (user && bcrypt.compareSync(password, user.password)) {
             const token = uuid();
-            
-            /*testentradaando com updateOne em vez do insertOne */
-            console.log(user,"teste de retorno")
-
+            console.log(user,"usuario do login")
             await db.collection("sessions").insertOne({
                 userId: user._id,
                  token:token 
         })
-
-        const teste =await db.collection("sessions").find().toArray()
-                console.log(teste,"token sign-in")
 
                 return res.status(201).send({ token:token, username:user.username})
 
@@ -103,8 +97,6 @@ app.post("/transactions", async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", '')
 
-    console.log(token, "post transactions")
-
     const transitionSchema = joi.object({
         price: joi.number().required(),
         description: joi.string().min(3).max(30).required(),
@@ -121,15 +113,15 @@ app.post("/transactions", async (req, res) => {
     try {
 
         const user = await db.collection('sessions').findOne({ token })
-      //  console.log(user, "post then")    
+
         if (!user) {
             return res.status(422).send("você não possui permissão")
         }
 
         await db.collection('transactions').insertOne({
-            userId: user.ObjectId,
+            userId: user.userId,
             type: type,
-            price: price,
+            price: price.toFixed(2),
             description: description,
             date: dayjs().format('DD/MM')
         })
@@ -148,7 +140,7 @@ app.post("/sign-out", async (req, res)=>{
         if (!user) {
             return res.status(422).send("você não possui permissão")
         }
-         await db.collection('sessions').deleteOne({ userID: user.user_id, token }).toArray()
+         await db.collection('sessions').deleteOne({ token: token }).toArray()
 
         return res.send(home)
 
@@ -158,16 +150,14 @@ app.post("/sign-out", async (req, res)=>{
 app.get("/transactions", async (req, res) => {
     const { authorization } = req.headers
     const token = authorization?.replace("Bearer ", '')
-    console.log(token, "get transactions")
 
     try{
         const user = await db.collection('sessions').findOne({ token })
-        console.log(user,"get then")
 
         if (!user) {
             return res.status(422).send("você não possui permissão")
         }
-        const home = await db.collection('transactions').find({userId: user.ObjectId}).toArray()
+        const home = await db.collection('transactions').find({userId: user.userId}).sort({_id:-1}).toArray()
     
         return res.send(home)
 
